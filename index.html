@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080b13">
+<title>NEXORIA — The Mind Territory Game</title>
+<style>
+:root{--bg:#080b13;--panel:#111827;--line:#2a354a;--blue:#54baff;--red:#ff6b68;--gold:#ffd47a;--text:#eef3ff;--muted:#8d9ab1}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#1b2940 0%,#080b13 60%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);display:flex;justify-content:center}
+.app{width:min(100%,760px);padding:16px 0 24px}header{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{font-weight:900;letter-spacing:.22em;color:var(--gold);font-size:13px}.tag{color:var(--muted);font-size:10px;letter-spacing:.12em}
+h1{font-size:clamp(27px,6vw,43px);letter-spacing:-.045em;margin:12px 0 4px;line-height:1}.sub{color:var(--muted);font-size:12px;line-height:1.5;margin:0 0 15px}
+.panel{background:linear-gradient(145deg,#131d30ed,#0d1320f5);border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 18px 55px #0006}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.player{border:1px solid #303b50;border-radius:13px;padding:10px;background:#0a101c}.player.active.blue{border-color:var(--blue);box-shadow:inset 0 0 0 1px #54baff40}.player.active.red{border-color:var(--red);box-shadow:inset 0 0 0 1px #ff6b6840}.pname{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;gap:4px}.pname b{color:var(--text);font-size:12px}.score{font-size:22px;font-weight:850;margin-top:5px}.score small{font-size:10px;font-weight:500;color:var(--muted)}
+#message{min-height:34px;font-size:12px;color:#d1dced;display:flex;align-items:center;gap:8px;margin:4px 2px 10px}#message:before{content:"";width:7px;height:7px;flex:none;border-radius:50%;background:var(--gold);box-shadow:0 0 12px #ffd47a88}
+.board-wrap{max-width:560px;margin:0 auto}.board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;touch-action:manipulation;user-select:none}
+.cell{aspect-ratio:1;min-width:0;border-radius:9px;border:1px solid #2b374d;background:linear-gradient(145deg,#1b2940,#111a2b);display:flex;align-items:center;justify-content:center;position:relative;font-size:clamp(16px,4.4vw,29px);cursor:pointer;overflow:hidden;transition:transform .12s,border-color .12s,filter .12s}
+.cell:active{transform:scale(.96)}.cell:nth-child(even){background:linear-gradient(145deg,#172238,#0f1829)}
+.cell.nexus{background:radial-gradient(circle,#5b431f,#211d25);border-color:#a77d3d;box-shadow:inset 0 0 14px #ffd47a20}
+.cell.portal{background:radial-gradient(circle,#29275d,#13182b);border-color:#766ce3}
+.cell.selected{border:2px solid #fff;box-shadow:0 0 18px #fff4;z-index:1}
+.cell.legal{border-color:#b9c9dc;box-shadow:inset 0 0 0 2px #b9c9dc22}
+.cell.legal:after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:#e7efff99}
+.cell.capture{border-color:#ff7d83;box-shadow:inset 0 0 0 2px #ff7d8330}
+.piece{width:72%;height:72%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(12px,3vw,20px);font-weight:900;border:2px solid #ffffff88;box-shadow:inset 0 2px 3px #fff5,0 4px 9px #0008;z-index:2}
+.piece.blue{background:radial-gradient(circle at 35% 25%,#b2e8ff,#248bd7 48%,#104a8a);color:#062342}
+.piece.red{background:radial-gradient(circle at 35% 25%,#ffd1b2,#f05c55 48%,#8e242f);color:#451117}
+.cell small{position:absolute;right:3px;bottom:1px;font-size:8px;color:#e4c783;opacity:.8}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0 2px}
+button{border:1px solid #35435a;background:#18243a;color:#eaf1ff;padding:10px 13px;border-radius:12px;font-weight:700;font-size:11px;cursor:pointer;touch-action:manipulation}
+button.primary{background:var(--gold);color:#211808;border-color:var(--gold)}button:active{transform:scale(.98)}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.tip{background:#0b1220;border:1px solid #26334a;border-radius:12px;padding:10px}.tip b{display:block;font-size:10px;margin-bottom:4px}.tip p{font-size:10px;line-height:1.45;color:var(--muted);margin:0}
+.footer{text-align:center;color:#63718a;font-size:10px;margin-top:14px}
+.overlay{position:fixed;inset:0;background:#050811d9;backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:22px;z-index:10}.overlay.show{display:flex}.modal{width:min(100%,360px);border:1px solid #3b4a64;border-radius:22px;padding:24px;background:#101827;text-align:center;box-shadow:0 20px 80px #000a}.modal h2{font-size:28px;margin:8px 0}.modal p{font-size:13px;line-height:1.5;color:var(--muted)}
+@media(min-width:600px){.panel{padding:18px}.board{gap:6px}.cell{border-radius:12px}.tip{padding:13px}}
+@media(max-width:380px){.app{padding-top:10px}.panel{padding:8px}.board{gap:3px}.cell{border-radius:7px}.how{grid-template-columns:1fr}.tag{font-size:8px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header><div class="brand">NEXORIA</div><div class="tag">LOCAL DUEL · TWO PLAYERS · ONE DEVICE</div></header>
+<h1>Claim the <span style="color:var(--gold)">Nexus.</span></h1>
+<p class="sub">A tactical territory duel. Capture the central Nexus, use portals to outmaneuver your rival, and score before they do. No dice. Every move is a decision.</p>
+<section class="panel">
+  <div class="players">
+    <div id="p2card" class="player red"><div class="pname"><b>PLAYER 2</b><span>▲ Crimson</span></div><div class="score"><span id="s2">0</span> <small>/ 3 Nexus points</small></div></div>
+    <div id="p1card" class="player blue active"><div class="pname"><b>PLAYER 1</b><span>◆ Azure</span></div><div class="score"><span id="s1">0</span> <small>/ 3 Nexus points</small></div></div>
+  </div>
+  <div id="message" aria-live="polite">Player 1: select one of your pieces, then tap a highlighted tile.</div>
+  <div class="board-wrap"><div id="board" class="board" role="grid" aria-label="Nexoria game board"></div></div>
+  <div class="controls">
+    <button id="endTurn">End turn</button>
+    <button id="undo">Undo move</button>
+    <button id="restart" class="primary">New match</button>
+  </div>
+  <div class="how">
+    <div class="tip"><b style="color:var(--gold)">01 / Nexus</b><p>Start your turn on the central tile to score one point. First to 3 wins.</p></div>
+    <div class="tip"><b style="color:#a99bff">02 / Portals</b><p>Land on a portal to teleport to its partner. Plan an ambush or escape.</p></div>
+    <div class="tip"><b style="color:#8bcfff">03 / Tactical moves</b><p>Move one square in any direction. Capture an enemy by landing on its tile.</p></div>
+  </div>
+</section>
+<p class="footer">NEXORIA prototype · Pass-and-play on one screen · No account or network required</p>
+</main>
+<div class="overlay" id="overlay"><div class="modal"><div style="font-size:36px">✦</div><h2 id="winTitle">Nexus claimed</h2><p id="winText">Victory!</p><button class="primary" id="playAgain">Play again</button></div></div>
+<script>
+(()=>{
+const N=7, boardEl=document.getElementById('board');
+const nexus={x:3,y:3}, portals=[{x:1,y:2},{x:5,y:4}];
+let pieces,turn,selected=null,legal=[],scores,history=[],gameOver=false;
+const k=(x,y)=>`${x},${y}`, inside=(x,y)=>x>=0&&x<N&&y>=0&&y<N;
+const isPortal=(x,y)=>portals.some(p=>p.x===x&&p.y===y);
+const isNexus=(x,y)=>x===nexus.x&&y===nexus.y;
+function initial(){
+ pieces=[
+ {id:'A1',owner:1,x:1,y:6},{id:'A2',owner:1,x:3,y:6},{id:'A3',owner:1,x:5,y:6},
+ {id:'C1',owner:2,x:1,y:0},{id:'C2',owner:2,x:3,y:0},{id:'C3',owner:2,x:5,y:0}
+ ];
+ turn=1;selected=null;legal=[];scores={1:0,2:0};history=[];gameOver=false;
+ document.getElementById('overlay').classList.remove('show');
+ say('Player 1: select one of your pieces, then tap a highlighted tile.');render();
+}
+function say(t){document.getElementById('message').textContent=t}
+function snap(){return JSON.stringify({pieces,turn,selected,legal,scores,gameOver})}
+function save(){history.push(snap());if(history.length>100)history.shift()}
+function undo(){if(!history.length||gameOver){say('Nothing to undo right now.');return}const s=JSON.parse(history.pop());pieces=s.pieces;turn=s.turn;selected=s.selected;legal=s.legal;scores=s.scores;gameOver=s.gameOver;document.getElementById('overlay').classList.remove('show');say('Last action undone.');render()}
+function at(x,y){return pieces.find(p=>p.x===x&&p.y===y)}
+function findPiece(id){return pieces.find(p=>p.id===id)}
+function calcLegal(p){
+ const out=[];
+ for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+  if(dx===0&&dy===0)continue;
+  const x=p.x+dx,y=p.y+dy;if(!inside(x,y))continue;
+  const other=at(x,y);if(other&&other.owner===turn)continue;
+  out.push({x,y,capture:!!other});
+ }
+ return out;
+}
+function clickCell(x,y){
+ if(gameOver)return;
+ const p=at(x,y);
+ if(selected){
+  const dest=legal.find(m=>m.x===x&&m.y===y);
+  if(dest){save();movePiece(findPiece(selected),x,y);return}
+ }
+ if(p&&p.owner===turn){selected=p.id;legal=calcLegal(p);say(`Player ${turn}: choose a highlighted tile for ${p.id}.`);render();return}
+ selected=null;legal=[];say(`Player ${turn}: select one of your pieces.`);render();
+}
+function movePiece(p,x,y){
+ const victim=at(x,y);if(victim&&victim.owner!==turn){pieces=pieces.filter(q=>q.id!==victim.id);say(`Captured ${victim.id}. Your rival loses a piece.`)}
+ p.x=x;p.y=y;selected=null;legal=[];
+ if(isPortal(x,y)){
+  const other=portals.find(q=>q.x!==x||q.y!==y);
+  if(!at(other.x,other.y)){p.x=other.x;p.y=other.y;say('Portal jump! You appeared at the linked gate.')}
+  else say('Portal blocked by a piece.');
+ }else if(isNexus(x,y))say('You reached the Nexus. Hold it until your next turn to score.');
+ else say(`Player ${turn} moved ${p.id}.`);
+ turn=turn===1?2:1;
+ const next=pieces.find(q=>q.owner===turn&&isNexus(q.x,q.y));
+ if(next){scores[turn]++;say(`Player ${turn} controls the Nexus and scores!`);if(scores[turn]>=3){render();win(turn);return}}
+ render();
+ if(!pieces.some(q=>q.owner===turn)){say(`Player ${turn} has no pieces left. Match over.`);win(turn===1?2:1)}
+}
+function render(){
+ boardEl.innerHTML='';
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+  const el=document.createElement('button');el.type='button';el.className='cell';el.setAttribute('role','gridcell');el.setAttribute('aria-label',`Row ${y+1}, column ${x+1}`);
+  if(isNexus(x,y)){el.classList.add('nexus');el.innerHTML='✦<small>NEXUS</small>'}
+  if(isPortal(x,y)){el.classList.add('portal');el.innerHTML='◉<small>RIFT</small>'}
+  const p=at(x,y);
+  if(p){el.innerHTML=`<span class="piece ${p.owner===1?'blue':'red'}">${p.owner===1?'◆':'▲'}</span>`;el.setAttribute('aria-label',`Player ${p.owner} piece ${p.id}`)}
+  if(selected===p?.id)el.classList.add('selected');
+  const lm=legal.find(m=>m.x===x&&m.y===y);if(lm){el.classList.add('legal');if(lm.capture)el.classList.add('capture')}
+  el.addEventListener('click',()=>clickCell(x,y));boardEl.appendChild(el);
+ }
+ document.getElementById('s1').textContent=scores[1];document.getElementById('s2').textContent=scores[2];
+ document.getElementById('p1card').classList.toggle('active',turn===1);
+ document.getElementById('p2card').classList.toggle('active',turn===2);
+ document.getElementById('p1card').classList.toggle('blue',turn===1);
+ document.getElementById('p2card').classList.toggle('red',turn===2);
+}
+function win(winner){gameOver=true;document.getElementById('winTitle').textContent=`Player ${winner} wins`;document.getElementById('winText').textContent=winner===1?'Azure claims the Nexus.':'Crimson claims the Nexus.';document.getElementById('overlay').classList.add('show')}
+document.getElementById('undo').addEventListener('click',undo);
+document.getElementById('restart').addEventListener('click',initial);
+document.getElementById('playAgain').addEventListener('click',initial);
+document.getElementById('endTurn').addEventListener('click',()=>{if(gameOver)return;save();selected=null;legal=[];turn=turn===1?2:1;const p=pieces.find(q=>q.owner===turn&&isNexus(q.x,q.y));if(p){scores[turn]++;say(`Player ${turn} holds the Nexus and scores!`);if(scores[turn]>=3){render();win(turn);return}}else say(`Turn passed. Player ${turn}, your move.`);render()});
+document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='u')undo();if(e.key.toLowerCase()==='r')initial()});
+initial();
+})();
+</script>
+</body>
+</html>
